@@ -42,10 +42,10 @@ public class Company {
     @CreationTimestamp
     private LocalDateTime createdAt;
     @Column(nullable = false)
-    private Long createdBy; // 🔐 who created company
+    private Long createdBy; 
 
     @Column(nullable = false)
-    private boolean isVerified = false; // 🔐 fraud prevention	
+    private boolean isVerified = false; // fraud prevention	
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;

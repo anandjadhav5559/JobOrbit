@@ -31,7 +31,7 @@ public class Application {
     private String coverLetter;
 
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status; // PENDING etc
+    private ApplicationStatus status; 
     
     private LocalDateTime appliedAt;
     private LocalDateTime updatedAt;
