@@ -1,0 +1,79 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+
+      # ✅ Service discovery routing
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+
+        # AUTH 
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+
+        # PROFILE 
+        - id: profile-service
+          uri: lb://profile-service
+          predicates:
+            - Path=/api/profiles/**
+
+        # JOB 
+        - id: job-service
+          uri: lb://job-service
+          predicates:
+            - Path=/api/jobs/**
+
+        #  FEED 
+        - id: feed-service
+          uri: lb://feed-service
+          predicates:
+            - Path=/api/feed/**
+
+        #  CHAT (REST) 
+        - id: chat-service
+          uri: lb://chat-service
+          predicates:
+            - Path=/api/chat/**
+
+        #  CHAT (WebSocket) 
+        - id: chat-websocket
+          uri: lb:ws://chat-service
+          predicates:
+            - Path=/ws-chat/**
+
+      #  CORS 
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: false   
+
+# EUREKA 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:8761/eureka
+
+  instance:
+    prefer-ip-address: true

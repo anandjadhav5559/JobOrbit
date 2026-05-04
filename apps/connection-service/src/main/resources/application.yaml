@@ -1,0 +1,53 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: connection-service
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/connection_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true&connectTimeout=30000&socketTimeout=60000
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}   
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      initialization-fail-timeout: -1
+      connection-timeout: 30000
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+        dialect: org.hibernate.dialect.MySQLDialect   # prevents dialect error
+
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASS}
+    connection-timeout: 30000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.web: INFO
