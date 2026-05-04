@@ -29,7 +29,7 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
-        dialect: org.hibernate.dialect.MySQLDialect   # 🔥 key fix
+        dialect: org.hibernate.dialect.MySQLDialect   
 
   data:
     redis:
