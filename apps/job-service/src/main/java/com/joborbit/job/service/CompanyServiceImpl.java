@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional
 @RequiredArgsConstructor
+//@PreAuthorize("hasRole('RECRUITER')")
 public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;

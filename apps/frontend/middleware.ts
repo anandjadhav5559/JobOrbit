@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/verify-otp", "/forgot-password", "/reset-password"];
+// These routes are always accessible without auth
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/verify-otp",
+  "/forgot-password",
+  "/reset-password",
+  "/",
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
-    return NextResponse.next();
-  }
-
-  // Allow static files and API routes
+  // Always allow static files and API routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -20,20 +23,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for auth cookie presence (we can't read localStorage in middleware)
-  // We check for our persisted zustand key in cookies or redirect
-  const authCookie = request.cookies.get("joborbit_auth");
-
-  // If no cookie-based auth signal, redirect to login
-  // Note: Zustand persist stores in localStorage — we use a client-side guard too
-  // This middleware handles the initial navigation guard
-  if (!authCookie) {
-    // For the root path, redirect to login
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+  // Allow all public routes
+  if (PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+    return NextResponse.next();
   }
 
+  // NOTE: Zustand persists auth in localStorage, which is NOT readable in middleware.
+  // Auth protection for private routes is handled client-side in AppShell.tsx.
+  // This middleware simply allows the request through; the client-side guard
+  // in AppShell will redirect to /login if the user is not authenticated.
   return NextResponse.next();
 }
 

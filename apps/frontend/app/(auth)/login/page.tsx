@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/store/authStore";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
-import type { Metadata } from "next";
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,8 +20,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verified = searchParams.get("verified");
   const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -56,82 +55,125 @@ export default function LoginPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="w-full"
     >
-      {/* Logo */}
-      <div className="flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-2 mb-3">
-          <Image src="/logo.png" alt="JobOrbit" width={48} height={48} className="object-contain" />
-          <span className="text-2xl font-bold">
-            <span className="text-text-primary">job</span>
-            <span className="gradient-text">Orbit</span>
-          </span>
-        </Link>
-        <p className="text-text-muted text-sm">Sign in to your account</p>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
+        <p className="text-[#94A3B8] text-sm">
+          Sign in to your account to continue your journey
+        </p>
       </div>
 
-      <Card className="shadow-card">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Verified success banner */}
+      {verified && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 mb-6 p-3.5 rounded-xl text-sm text-green-400"
+          style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
+        >
+          <CheckCircle2 size={18} className="shrink-0" />
+          Email verified successfully! You can now sign in.
+        </motion.div>
+      )}
+
+      {/* Form card */}
+      <div className="rounded-2xl p-7"
+        style={{ background: "rgba(15, 22, 41, 0.9)", border: "1px solid rgba(30, 45, 74, 0.8)", backdropFilter: "blur(12px)" }}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <Input
-            label="Email"
+            label="Email address"
             type="email"
             placeholder="you@example.com"
             leftIcon={<Mail size={16} />}
             error={errors.email?.message}
             {...register("email")}
           />
-          <Input
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            leftIcon={<Lock size={16} />}
-            rightIcon={
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-text-muted hover:text-text-primary transition-colors"
+
+          <div>
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[#475569] hover:text-[#94A3B8] transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+              error={errors.password?.message}
+              {...register("password")}
+            />
+            <div className="flex justify-end mt-1.5">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium transition-colors"
+                style={{ color: "#8B5CF6" }}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            }
-            error={errors.password?.message}
-            {...register("password")}
-          />
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-400">
-              {error}
+                Forgot password?
+              </Link>
             </div>
-          )}
-
-          <div className="flex items-center justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-violet hover:text-violet-light transition-colors"
-            >
-              Forgot password?
-            </Link>
           </div>
 
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3.5 rounded-xl text-sm text-red-400"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
+            >
+              {error}
+            </motion.div>
+          )}
+
           <Button type="submit" fullWidth loading={isSubmitting} size="lg">
-            Sign In
+            <span className="flex items-center justify-center gap-2">
+              Sign In
+              <ArrowRight size={16} />
+            </span>
           </Button>
         </form>
 
-        <div className="mt-6 pt-5 border-t border-border text-center">
-          <p className="text-sm text-text-muted">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-violet hover:text-violet-light font-medium transition-colors"
-            >
-              Create account
-            </Link>
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px" style={{ background: "rgba(30, 45, 74, 0.8)" }} />
+          <span className="text-xs text-[#475569]">New to JobOrbit?</span>
+          <div className="flex-1 h-px" style={{ background: "rgba(30, 45, 74, 0.8)" }} />
         </div>
-      </Card>
+
+        <Link
+          href="/register"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all duration-200"
+          style={{ background: "rgba(124, 58, 237, 0.1)", border: "1px solid rgba(124, 58, 237, 0.3)", color: "#8B5CF6" }}
+        >
+          Create your free account
+          <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      {/* Terms */}
+      <p className="text-center text-[10px] text-[#475569] mt-6">
+        By signing in you agree to our{" "}
+        <span className="underline cursor-pointer hover:text-[#94A3B8] transition-colors">Terms of Service</span>
+        {" "}and{" "}
+        <span className="underline cursor-pointer hover:text-[#94A3B8] transition-colors">Privacy Policy</span>.
+      </p>
     </motion.div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

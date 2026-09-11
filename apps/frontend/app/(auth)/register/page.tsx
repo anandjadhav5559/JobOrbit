@@ -2,21 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, User, Eye, EyeOff, Briefcase } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Briefcase, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { authService } from "@/services/authService";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 
 const schema = z.object({
-  firstName: z.string().min(2, "First name required"),
-  lastName: z.string().min(2, "Last name required"),
+  firstName: z.string().min(2, "First name is required"),
+  lastName: z.string().min(2, "Last name is required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["CANDIDATE", "RECRUITER"]),
@@ -32,11 +30,15 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { role: "CANDIDATE" },
   });
+
+  const selectedRole = watch("role");
 
   const onSubmit = async (data: FormData) => {
     setError("");
@@ -49,25 +51,72 @@ export default function RegisterPage() {
     }
   };
 
+  const passwordValue = watch("password") || "";
+  const strength = passwordValue.length === 0 ? 0
+    : passwordValue.length < 6 ? 1
+    : passwordValue.length < 10 ? 2
+    : /[A-Z]/.test(passwordValue) && /[0-9]/.test(passwordValue) ? 4 : 3;
+  const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
+  const strengthColors = ["", "#EF4444", "#F59E0B", "#10B981", "#7C3AED"];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="w-full"
     >
-      <div className="flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-2 mb-3">
-          <Image src="/logo.png" alt="JobOrbit" width={48} height={48} className="object-contain" />
-          <span className="text-2xl font-bold">
-            <span className="text-text-primary">job</span>
-            <span className="gradient-text">Orbit</span>
-          </span>
-        </Link>
-        <p className="text-text-muted text-sm">Create your JobOrbit account</p>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Create account</h1>
+        <p className="text-[#94A3B8] text-sm">
+          Join thousands of professionals on JobOrbit
+        </p>
       </div>
 
-      <Card className="shadow-card">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Form card */}
+      <div className="rounded-2xl p-7"
+        style={{ background: "rgba(15, 22, 41, 0.9)", border: "1px solid rgba(30, 45, 74, 0.8)", backdropFilter: "blur(12px)" }}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+          {/* Role selector — first for intent clarity */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium" style={{ color: "#94A3B8" }}>I am joining as a</label>
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { value: "CANDIDATE", label: "Job Seeker", desc: "Find & apply for jobs", icon: Search },
+                { value: "RECRUITER", label: "Recruiter", desc: "Post jobs & hire talent", icon: Briefcase },
+              ] as const).map(({ value, label, desc, icon: Icon }) => {
+                const active = selectedRole === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setValue("role", value)}
+                    className="flex flex-col items-start gap-1.5 p-4 rounded-xl text-left transition-all duration-200"
+                    style={{
+                      background: active ? "rgba(124, 58, 237, 0.15)" : "rgba(26, 35, 64, 0.6)",
+                      border: active ? "1px solid rgba(124, 58, 237, 0.5)" : "1px solid rgba(30, 45, 74, 0.8)",
+                      boxShadow: active ? "0 0 16px rgba(124, 58, 237, 0.15)" : "none",
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ background: active ? "rgba(124, 58, 237, 0.3)" : "rgba(30, 45, 74, 0.8)" }}>
+                      <Icon size={16} style={{ color: active ? "#8B5CF6" : "#475569" }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: active ? "#F1F5F9" : "#94A3B8" }}>{label}</p>
+                      <p className="text-[11px]" style={{ color: active ? "#8B5CF6" : "#475569" }}>{desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <input type="hidden" {...register("role")} />
+            {errors.role && <p className="text-xs text-red-400">{errors.role.message}</p>}
+          </div>
+
+          {/* Name row */}
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="First Name"
@@ -85,7 +134,7 @@ export default function RegisterPage() {
           </div>
 
           <Input
-            label="Email"
+            label="Email address"
             type="email"
             placeholder="you@example.com"
             leftIcon={<Mail size={16} />}
@@ -93,68 +142,86 @@ export default function RegisterPage() {
             {...register("email")}
           />
 
-          <Input
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            leftIcon={<Lock size={16} />}
-            rightIcon={
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-text-muted hover:text-text-primary"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            }
-            error={errors.password?.message}
-            {...register("password")}
-          />
-
-          {/* Role selection */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-text-secondary">I am a</label>
-            <div className="grid grid-cols-2 gap-3">
-              {(["CANDIDATE", "RECRUITER"] as const).map((role) => (
-                <label key={role} className="cursor-pointer">
-                  <input
-                    type="radio"
-                    value={role}
-                    className="sr-only"
-                    {...register("role")}
-                  />
-                  <div className="flex items-center gap-2 p-3 rounded-xl border border-border hover:border-violet/50 transition-all has-[:checked]:border-violet has-[:checked]:bg-violet/10">
-                    <Briefcase size={16} className="text-text-muted" />
-                    <span className="text-sm font-medium text-text-secondary capitalize">
-                      {role === "CANDIDATE" ? "Job Seeker" : "Recruiter"}
-                    </span>
-                  </div>
-                </label>
-              ))}
-            </div>
-            {errors.role && <p className="text-xs text-red-400">{errors.role.message}</p>}
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="transition-colors"
+                  style={{ color: "#475569" }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+              error={errors.password?.message}
+              {...register("password")}
+            />
+            {/* Password strength bar */}
+            {passwordValue.length > 0 && (
+              <div className="space-y-1">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex-1 h-1 rounded-full transition-all duration-300"
+                      style={{ background: i <= strength ? strengthColors[strength] : "rgba(30, 45, 74, 0.8)" }}
+                    />
+                  ))}
+                </div>
+                <p className="text-[11px]" style={{ color: strengthColors[strength] }}>
+                  {strengthLabels[strength]} password
+                </p>
+              </div>
+            )}
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-400">
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3.5 rounded-xl text-sm text-red-400"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
           <Button type="submit" fullWidth loading={isSubmitting} size="lg">
-            Create Account
+            <span className="flex items-center justify-center gap-2">
+              Create Account
+              <ArrowRight size={16} />
+            </span>
           </Button>
         </form>
 
-        <div className="mt-6 pt-5 border-t border-border text-center">
-          <p className="text-sm text-text-muted">
-            Already have an account?{" "}
-            <Link href="/login" className="text-violet hover:text-violet-light font-medium transition-colors">
-              Sign in
-            </Link>
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px" style={{ background: "rgba(30, 45, 74, 0.8)" }} />
+          <span className="text-xs text-[#475569]">Already have an account?</span>
+          <div className="flex-1 h-px" style={{ background: "rgba(30, 45, 74, 0.8)" }} />
         </div>
-      </Card>
+
+        <Link
+          href="/login"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all duration-200"
+          style={{ background: "rgba(124, 58, 237, 0.1)", border: "1px solid rgba(124, 58, 237, 0.3)", color: "#8B5CF6" }}
+        >
+          Sign in to your account
+          <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      <p className="text-center text-[10px] text-[#475569] mt-6">
+        By creating an account you agree to our{" "}
+        <span className="underline cursor-pointer hover:text-[#94A3B8] transition-colors">Terms of Service</span>
+        {" "}and{" "}
+        <span className="underline cursor-pointer hover:text-[#94A3B8] transition-colors">Privacy Policy</span>.
+      </p>
     </motion.div>
   );
 }

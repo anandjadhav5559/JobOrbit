@@ -69,7 +69,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyOtp(request));
     }
 
-    // RESEND OTP 
+    // RESEND OTP
     @PostMapping("/resend-otp")
     public ResponseEntity<String> resendOtp(
             @RequestBody ResendOtpRequest request) {
@@ -83,7 +83,7 @@ public class AuthController {
             @RequestBody ForgetPasswordRequest request) {
 
         return ResponseEntity.ok(authService.forgetPassword(request));
-    }
+    } 
 
     // RESET PASSWORD 
     @PostMapping("/reset-password")
